@@ -1,0 +1,116 @@
+show databases;
+
+create database Library;
+
+drop database Library;
+show databases;
+create database VIT;
+
+create table ECE(
+stud_ID int,
+name varchar(20),
+stud_mark int 
+
+);
+
+use VIT;
+
+create table IT(
+stud_ID int,
+name varchar(20),
+stud_mark int 
+
+);
+
+show tables from VIT;
+
+select * from ECE;
+
+insert into ECE values (101, "Ash",98);
+
+create table cse(
+stud_ID int,
+name varchar(20),
+stud_mark int,
+age int
+);
+
+create table mech(
+stud_ID int,
+name varchar(20),
+stud_mark int,
+age int
+);
+create table eee(
+stud_ID int,
+name varchar(20),
+stud_mark int,
+age int
+);
+
+
+select * from eee;
+
+insert into eee values (103,"Anurup",89,21);
+insert into eee values (104,"Anish",90,22);
+insert into eee values (105,"Aman",80,23);
+insert into eee values (106,"Bibek",86,21);
+insert into eee values (107,"Bony",85,20);
+insert into eee values (108,"Cassie",82,20);
+insert into eee values (109,"Christina",96,19);
+insert into eee values (110,"Debra",86,22);
+insert into eee values (111,"David",80,23);
+insert into eee values (112,"Emily",87,19);
+
+
+
+select * from cse;
+
+insert into cse values (113,"Ash",99,22);
+insert into cse values (114,"Anisha",90,22);
+insert into cse values (115,"Amisha",70,23);
+insert into cse values (116,"Anita",97,20);
+insert into cse values (117,"Arush",89,21);
+insert into cse values (118,"Binod",84,23);
+insert into cse values (119,"Binita",95,18);
+insert into cse values (120,"Kai",88,21);
+insert into cse values (121,"Suki",87,23);
+insert into cse values (122,"Fero",86,19);
+
+
+
+select * from mech;
+
+insert into mech values (123,"Hari",99,21);
+insert into mech values (124,"Karthik",90,23);
+insert into mech values (125,"Country",70,21);
+insert into mech values (126,"Snoop",97,21);
+insert into mech values (127,"Kylar",89,19);
+insert into mech values (128,"Escanor",84,19);
+insert into mech values (129,"Lovey",95,22);
+insert into mech values (130,"Sandy",88,23);
+insert into mech values (131,"Istuc",87,24);
+insert into mech values (132,"Grimm",86,19);
+
+
+alter table cse add(
+stud_add varchar(200),
+stud_skill varchar(50)
+);
+
+select * from cse;
+
+alter table cse drop column stud_skill;
+
+alter table cse add(
+stud_cntry varchar(70) default "India"
+
+);
+
+update cse set stud_mark=98 where name="Anisha"; 
+
+update cse set stud_mark=98+20;
+
+
+
+
