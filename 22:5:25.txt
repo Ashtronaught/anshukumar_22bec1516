@@ -1,0 +1,135 @@
+use vit;
+
+select * from worker;
+select max(department) from worker where department;
+
+SELECT DEPARTMENT, COUNT(*) AS employee_count, SUM(SALARY) AS total_salary
+FROM Worker
+GROUP BY DEPARTMENT
+ORDER BY total_salary asc;
+
+select department, count(department) 
+from worker 
+group by department
+ having count(department)>3;
+ 
+ SELECT department, SUM(salary)
+FROM worker
+GROUP BY department
+ORDER BY SUM(salary) DESC
+LIMIT 1 OFFSET 1;
+
+select * from worker where salary = (select max(salary) from worker);
+select * from worker where salary = (select min(salary) from worker);
+select * from worker
+where joining_date = (select min(joining_date) from worker);
+
+select * from worker
+where salary = (
+  select max(salary)
+  from worker
+  where department = 'hr'
+)
+and department = 'hr';
+
+SELECT first_name, department 
+FROM Worker 
+WHERE salary = (
+    SELECT DISTINCT salary 
+    FROM Worker 
+    ORDER BY salary DESC 
+    LIMIT 1 OFFSET 2
+);
+
+select first_name as 'junior'
+ from worker
+ where joining_date=(select max(joining_date) from worker);
+ 
+
+
+## create student table
+create table student (
+  stud_id int primary key,
+  name varchar(50)
+);
+
+-- insert 10 students
+insert into student (stud_id, name) values
+(1, 'arjun'),
+(2, 'priya'),
+(3, 'rahul'),
+(4, 'neha'),
+(5, 'vivek'),
+(6, 'anjali'),
+(7, 'deepak'),
+(8, 'ritu'),
+(9, 'amit'),
+(10, 'sakshi');
+
+## create address table
+create table address (
+  stud_id int,
+  address varchar(100)
+);
+
+##insert addresses (some stud_id missing to show join effects)
+insert into address (stud_id, address) values
+(1, 'delhi'),
+(2, 'mumbai'),
+(4, 'bangalore'),
+(5, 'chennai'),
+(7, 'hyderabad'),
+(8, 'pune'),
+(11, 'kolkata');  
+
+## inner join
+select s.name, a.address
+from student s
+inner join address a on s.stud_id = a.stud_id;
+
+## left join
+select s.name, a.address
+from student s
+left join address a on s.stud_id = a.stud_id;
+
+## right join
+select s.name, a.address
+from student s
+right join address a on s.stud_id = a.stud_id;
+
+## full join 
+select s.name, a.address
+from student s
+left join address a on s.stud_id = a.stud_id
+union
+select s.name, a.address
+from student s
+right join address a on s.stud_id = a.stud_id;
+
+## cross join
+select s.name, a.address
+from student s
+cross join address a;
+
+
+
+select distinct salary
+from worker w1
+where 5 = (
+    select count(distinct salary)
+    from worker w2
+    where w2.salary >= w1.salary
+);
+
+SELECT w1.salary
+FROM   Worker  w1
+LEFT   JOIN Worker w2
+       ON   w2.salary > w1.salary         
+GROUP  BY w1.salary                       
+HAVING COUNT(DISTINCT w2.salary) = 4;
+
+
+
+
+
+
