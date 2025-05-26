@@ -1,0 +1,309 @@
+package CRUD_Operation;
+
+
+
+import connection.Dbconnection;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.Scanner;
+
+public class CRUD_Operation {
+
+	public static void main(String[] args) {
+		CRUD_Operation objTest=new CRUD_Operation();
+		objTest.create_data("103", "manoj", 55);
+	objTest.create_data("104", "karthick", 65);
+
+
+
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Welcome to the Student Management System");
+		System.out.println("Enter the number of students you want to add: ");
+		int n = sc.nextInt();
+		for (int i = 0; i < n; i++) {
+
+			System.out.println("Enter details for student " + (i + 1) + ":");
+			sc.nextLine(); // Consume the newline character
+			System.out.print("Enter the sl_no: ");
+			String sl_no = sc.nextLine();
+			System.out.print("Enter the name: ");
+			String name = sc.nextLine();
+			System.out.print("Enter the mark: ");
+			int mark = sc.nextInt();
+
+			objTest.create_data(sl_no, name, mark);
+		}
+
+		/// read data from the database
+		objTest.read_data();
+		// read data by id
+		System.out.print("Enter the sl_no to read data: ");
+		String sl_no = sc.nextLine();
+		objTest.read_data_by_id(sl_no);
+
+		// update data
+		System.out.print("Enter the sl_no to update data: ");
+		String old_sl_no = sc.nextLine();
+		System.out.print("Enter the new sl_no: ");
+		String new_sl_no = sc.nextLine();
+		System.out.print("Enter the name: ");
+		String name = sc.nextLine();
+		System.out.print("Enter the mark: ");
+		int mark = sc.nextInt();
+		objTest.update_data_query(old_sl_no, new_sl_no, name, mark);
+
+		//alter table and adding an age column
+
+		objTest.alter_table("ALTER TABLE student ADD COLUMN age INT");
+		
+		// read data with other methods
+		objTest.read_data_with_other_methods();
+		// read data by condition
+		System.out.print("Enter the condition to read data (e.g., mark > 50): ");
+		sc.nextLine(); // Consume the newline character
+		String condition = sc.nextLine();
+		objTest.read_data_by_condition(condition);
+		// delete data
+		System.out.print("Enter the sl_no to delete data: ");
+		String delete_sl_no = sc.nextLine();
+		objTest.delete_data(delete_sl_no);
+		
+		// Example of creating a table and altering it
+
+
+
+	String createTableQuery = "CREATE TABLE IF NOT EXISTS student ("
+    + "sl_no VARCHAR(10) PRIMARY KEY, "
+    + "name VARCHAR(50), "
+    + "mark INT)";
+execute_table_query(createTableQuery);
+String updateTableQuery = "ALTER TABLE student ADD COLUMN age INT";
+execute_table_query(updateTableQuery);
+
+}
+
+public void create_data(String sl_no,String name,int mark){
+	Dbconnection obj_DB_Connection=new Dbconnection();
+	Connection connection=obj_DB_Connection.get_connection();
+	PreparedStatement ps=null;
+	try {
+		String query="insert into student values (?,?,?)";
+		ps=connection.prepareStatement(query);
+		ps.setString(1, sl_no);
+		ps.setString(2, name);
+		ps.setInt(3, mark);
+		System.out.println(ps);
+		ps.executeUpdate();
+	} catch (Exception e) {
+		System.out.println(e);
+	}
+}
+
+public void read_data() {
+    Dbconnection obj_DB_Connection = new Dbconnection();
+    Connection connection = obj_DB_Connection.get_connection();
+    PreparedStatement ps = null;
+    try {
+        String query = "SELECT * FROM student";
+        ps = connection.prepareStatement(query);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            String sl_no = rs.getString("sl_no");
+            String name = rs.getString("name");
+            int mark = rs.getInt("mark");
+            System.out.println("Sl No: " + sl_no + ", Name: " + name + ", Mark: " + mark);
+        }
+    } catch (Exception e) {
+        System.out.println("Error while reading data.");
+        e.printStackTrace();
+    } finally {
+        try {
+            if (ps != null) ps.close();
+            if (connection != null) connection.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+public void read_data_by_id(String sl_no) {
+    Dbconnection obj_DB_Connection = new Dbconnection();
+    Connection connection = obj_DB_Connection.get_connection();
+    PreparedStatement ps = null;
+    try {
+        String query = "SELECT * FROM student WHERE sl_no = ?";
+        ps = connection.prepareStatement(query);
+        ps.setString(1, sl_no);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            String name = rs.getString("name");
+            int mark = rs.getInt("mark");
+            System.out.println("Sl No: " + sl_no + ", Name: " + name + ", Mark: " + mark);
+        } else {
+            System.out.println("No record found for Sl No: " + sl_no);
+        }
+    } catch (Exception e) {
+        System.out.println("Error while reading data by ID.");
+        e.printStackTrace();
+    } finally {
+        try {
+            if (ps != null) ps.close();
+            if (connection != null) connection.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+public static void execute_table_query(String query) {
+    Dbconnection obj_DB_Connection = new Dbconnection();
+    Connection connection = obj_DB_Connection.get_connection();
+    PreparedStatement ps = null;
+    try {
+        ps = connection.prepareStatement(query);
+        ps.execute();
+        System.out.println("Query executed successfully: " + query);
+    } catch (Exception e) {
+        System.out.println("Error while executing query: " + query);
+        e.printStackTrace();
+    } finally {
+        try {
+            if (ps != null) ps.close();
+            if (connection != null) connection.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+public static void update_data_query(String sl_no, String new_sl_no, String name, int mark) {
+    Dbconnection obj_DB_Connection = new Dbconnection();
+    Connection connection = obj_DB_Connection.get_connection();
+    PreparedStatement ps = null;
+    try {
+		String query = "UPDATE student SET sl_no=?, name = ?, mark = ? WHERE sl_no = ?";
+        ps = connection.prepareStatement(query);
+		ps.setString(1, new_sl_no);
+		ps.setString(2, name);
+		ps.setInt(3, mark);
+		ps.setString(4, sl_no);
+		System.out.println(ps);
+		ps.executeUpdate();
+
+    } catch (Exception e) {
+        System.out.println("Error while executing query: " + e.getMessage());
+        e.printStackTrace();
+    } finally {
+        try {
+            if (ps != null) ps.close();
+            if (connection != null) connection.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+public void alter_table(String query) {
+    Dbconnection obj_DB_Connection = new Dbconnection();
+    Connection connection = obj_DB_Connection.get_connection();
+    PreparedStatement ps = null;
+    try {
+        ps = connection.prepareStatement(query);
+        ps.execute();
+        System.out.println("Table altered successfully with query: " + query);
+    } catch (Exception e) {
+        System.out.println("Error while altering table: " + e.getMessage());
+        e.printStackTrace();
+    } finally {
+        try {
+            if (ps != null) ps.close();
+            if (connection != null) connection.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+public void read_data_with_other_methods() {
+    Dbconnection obj_DB_Connection = new Dbconnection();
+    Connection connection = obj_DB_Connection.get_connection();
+    PreparedStatement ps = null;
+    try {
+        String query = "SELECT * FROM student";
+        ps = connection.prepareStatement(query);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            String sl_no = rs.getObject("sl_no", String.class);
+            String name = rs.getNString("name");
+            double mark = rs.getDouble("mark");
+            System.out.println("Sl No: " + sl_no + ", Name: " + name + ", Mark: " + mark);
+        }
+    } catch (Exception e) {
+        System.out.println("Error while reading data with other methods: " + e.getMessage());
+        e.printStackTrace();
+    } finally {
+        try {
+            if (ps != null) ps.close();
+            if (connection != null) connection.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+public void read_data_by_condition(String condition) {
+    Dbconnection obj_DB_Connection = new Dbconnection();
+    Connection connection = obj_DB_Connection.get_connection();
+    PreparedStatement ps = null;
+    try {
+        String query = "SELECT * FROM student WHERE " + condition;
+        ps = connection.prepareStatement(query);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            String sl_no = rs.getString("sl_no");
+            String name = rs.getString("name");
+            int mark = rs.getInt("mark");
+            System.out.println("Sl No: " + sl_no + ", Name: " + name + ", Mark: " + mark);
+        }
+    } catch (Exception e) {
+        System.out.println("Error while reading data with condition: " + e.getMessage());
+        e.printStackTrace();
+    } finally {
+        try {
+            if (ps != null) ps.close();
+            if (connection != null) connection.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+public void delete_data(String sl_no) {
+    Dbconnection obj_DB_Connection = new Dbconnection();
+    Connection connection = obj_DB_Connection.get_connection();
+    PreparedStatement ps = null;
+    try {
+        String query = "DELETE FROM student WHERE sl_no = ?";
+        ps = connection.prepareStatement(query);
+        ps.setString(1, sl_no);
+        ps.executeUpdate();
+        System.out.println("Data deleted successfully.");
+    } catch (Exception e) {
+        System.out.println("Error while deleting data: " + e.getMessage());
+        e.printStackTrace();
+    } finally {
+        try {
+            if (ps != null) ps.close();
+            if (connection != null) connection.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+
+}
