@@ -1,0 +1,39 @@
+# Create folders for each replica set node
+mkdir -p ~/mongo-replSet/rs1 ~/mongo-replSet/rs2 ~/mongo-replSet/rs3
+
+# Start three MongoDB instances
+mongod --dbpath ~/mongo-replSet/rs1 --port 27017 --replSet rsTest --bind_ip localhost
+mongod --dbpath ~/mongo-replSet/rs2 --port 27018 --replSet rsTest --bind_ip localhost
+mongod --dbpath ~/mongo-replSet/rs3 --port 27019 --replSet rsTest --bind_ip localhost
+
+#Replica Set INIT
+
+rs.initiate({
+  _id: "rsTest",
+  members: [
+    { _id: 0, host: "localhost:27017" },
+    { _id: 1, host: "localhost:27018" },
+    { _id: 2, host: "localhost:27019" }
+  ]
+})
+
+rs.status()
+rs.isMaster()
+
+//Insert data on primary
+
+use replicaTest
+db.demoColl.insertOne({ message: "Inserted from primary", ts: new Date() })
+// connect to secondary 
+
+mongodb://localhost:27018/?readPreference=secondary
+
+// read data
+
+use replicaTest
+db.demoColl.find().pretty()
+
+//more data
+
+db.demoColl.insertOne({ message: "Another test", from: "primary" })
+
