@@ -1,0 +1,96 @@
+# -----------------------------
+# MongoDB Sharded Cluster Setup
+# -----------------------------
+
+# Step 1: Create Data Directories
+mkdir -p ~/mongo-shard-data/cfg{1,2,3}
+mkdir -p ~/mongo-shard-data/shard1_{1,2,3}
+mkdir -p ~/mongo-shard-data/shard2_{1,2,3}
+mkdir -p ~/mongo-shard-data/mongos
+
+# Step 2: Start Config Servers (run in 3 terminals)
+mongod --configsvr --replSet configReplSet --port 27019 --dbpath ~/mongo-shard-data/cfg1 --bind_ip localhost
+mongod --configsvr --replSet configReplSet --port 27020 --dbpath ~/mongo-shard-data/cfg2 --bind_ip localhost
+mongod --configsvr --replSet configReplSet --port 27021 --dbpath ~/mongo-shard-data/cfg3 --bind_ip localhost
+
+# Step 3: Initiate Config Replica Set
+mongosh --port 27019
+rs.initiate({
+  _id: "configReplSet",
+  configsvr: true,
+  members: [
+    { _id: 0, host: "localhost:27019" },
+    { _id: 1, host: "localhost:27020" },
+    { _id: 2, host: "localhost:27021" }
+  ]
+})
+
+# Step 4: Start Shard 1 Servers (3 terminals)
+mongod --shardsvr --replSet shard1ReplSet --port 27022 --dbpath ~/mongo-shard-data/shard1_1 --bind_ip localhost
+mongod --shardsvr --replSet shard1ReplSet --port 27023 --dbpath ~/mongo-shard-data/shard1_2 --bind_ip localhost
+mongod --shardsvr --replSet shard1ReplSet --port 27024 --dbpath ~/mongo-shard-data/shard1_3 --bind_ip localhost
+
+# Step 5: Initiate Shard 1 Replica Set
+mongosh --port 27022
+rs.initiate({
+  _id: "shard1ReplSet",
+  members: [
+    { _id: 0, host: "localhost:27022" },
+    { _id: 1, host: "localhost:27023" },
+    { _id: 2, host: "localhost:27024" }
+  ]
+})
+
+# Step 6: Start Shard 2 Servers (3 terminals)
+mongod --shardsvr --replSet shard2ReplSet --port 27025 --dbpath ~/mongo-shard-data/shard2_1 --bind_ip localhost
+mongod --shardsvr --replSet shard2ReplSet --port 27026 --dbpath ~/mongo-shard-data/shard2_2 --bind_ip localhost
+mongod --shardsvr --replSet shard2ReplSet --port 27027 --dbpath ~/mongo-shard-data/shard2_3 --bind_ip localhost
+
+# Step 7: Initiate Shard 2 Replica Set
+mongosh --port 27025
+rs.initiate({
+  _id: "shard2ReplSet",
+  members: [
+    { _id: 0, host: "localhost:27025" },
+    { _id: 1, host: "localhost:27026" },
+    { _id: 2, host: "localhost:27027" }
+  ]
+})
+
+# Step 8: Start mongos Router
+mongos --configdb configReplSet/localhost:27019,localhost:27020,localhost:27021 --port 27018 --bind_ip localhost
+
+# Step 9: Add Shards to Cluster
+mongosh --port 27018
+sh.addShard("shard1ReplSet/localhost:27022,localhost:27023,localhost:27024")
+sh.addShard("shard2ReplSet/localhost:27025,localhost:27026,localhost:27027")
+
+# Step 10: Enable Sharding for a Database and Collection
+sh.enableSharding("testDB")
+sh.shardCollection("testDB.testCollection", { userId: 1 })
+
+# Step 11: Insert Data (in mongosh)
+let bulk = []
+for (let i = 0; i < 10000; i++) {
+  bulk.push({ userId: i, data: "Sample " + i, timestamp: new Date() })
+  if (bulk.length === 1000) {
+    db.testCollection.insertMany(bulk)
+    bulk = []
+  }
+}
+if (bulk.length > 0) db.testCollection.insertMany(bulk)
+
+# Step 12: Force Chunk Split and Move (optional)
+sh.splitAt("testDB.testCollection", { userId: 5000 })
+sh.moveChunk("testDB.testCollection", { userId: 5000 }, "shard2ReplSet")
+
+# Step 13: Verify Sharding
+sh.status()
+db.testCollection.getShardDistribution()
+db.getSiblingDB("config").chunks.find({ ns: "testDB.testCollection" }).pretty()
+
+# Step 14: Compass Connection URI
+mongodb://localhost:27018/
+
+# Optional Cleanup (manual)
+db.getSiblingDB("admin").runCommand({ cleanupOrphaned: "testDB.testCollection" })
